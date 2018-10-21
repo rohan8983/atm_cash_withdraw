@@ -2,8 +2,9 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const ports = require("./config/keys");
-//routes
-const cards = require("./routes/api/cards");
+const bodyParser = require("body-parser");
+//importing routes
+const card = require("./routes/api/card");
 
 //connect to mongoDB
 mongoose
@@ -14,9 +15,14 @@ mongoose
   .then(() => console.log("MongoDB connected."))
   .catch(err => console.error(err));
 
-//Routes
-app.use("/api/cards", cards);
+//body parser middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
+//Routes
+app.use("/api/card", card);
+
+//server
 app.listen(ports.port, () =>
   console.log(`server is running on port ${ports.port}...`)
 );
