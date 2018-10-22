@@ -66,30 +66,34 @@ router.post("/login", async (req, res) => {
 //             count and store transaction history
 //@access     Private
 router.put("/withdrawal", async (req, res) => {
-  if (req.body.withdrawalAmt % 100 === 0) {
-    const card = await Card.findOne({
-      cardNumber: req.body.cardNumber,
-      balance: { $gte: req.body.withdrawalAmt }
-    });
-    if (card && card.balance !== 0) {
-      //update atm and get cash
-      const notes = await atmWithdrawal(card.balance, req.body.withdrawalAmt);
-      const data = await card.updateOne({
-        balance: card.balance - req.body.withdrawalAmt
+  if (req.body.withdrawalAmt) {
+    if (req.body.withdrawalAmt % 100 === 0) {
+      const card = await Card.findOne({
+        cardNumber: req.body.cardNumber,
+        balance: { $gte: req.body.withdrawalAmt }
       });
-      if (data.ok) {
-        //store transactions details in DB
-        const transactionsDetails = { card, req, res, notes };
-        storeTransaction(transactionsDetails);
+      if (card && card.balance !== 0) {
+        //update atm and get cash
+        const notes = await atmWithdrawal(card.balance, req.body.withdrawalAmt);
+        const data = await card.updateOne({
+          balance: card.balance - req.body.withdrawalAmt
+        });
+        if (data.ok) {
+          //store transactions details in DB
+          const transactionsDetails = { card, req, res, notes };
+          storeTransaction(transactionsDetails);
+        }
+      } else {
+        res.json({ msg: "insuffient balance", status: false });
       }
     } else {
-      res.json({ msg: "insuffient balance", status: false });
+      res.json({
+        msg: "withdrawal amount should be multiple of 100",
+        status: false
+      });
     }
   } else {
-    res.json({
-      msg: "withdrawal amount should be multiple of 100",
-      status: false
-    });
+    res.json({ msg: "Please Enter Valid amount", status: false });
   }
 });
 

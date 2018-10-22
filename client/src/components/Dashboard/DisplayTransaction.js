@@ -51,7 +51,7 @@ const DisplayTransaction = props => {
       <br />
       <Link to="/dashboard">
         <RaisedButton
-          label="Cancel"
+          label="Back"
           secondary={true}
           style={{ margin: 12 }}
           onClick={localStorage.removeItem("userId")}

@@ -49,7 +49,7 @@ class Dashboard extends PureComponent {
         />
         <Link to="/">
           <RaisedButton
-            label="Cancel"
+            label="Back"
             secondary={true}
             style={{ margin: 12 }}
             onClick={() => this.props.action.handleCancel()}

@@ -4,8 +4,7 @@
   "description": "sample demo app for how atm works",
   "main": "index.js",
   "dependencies": {
-    "concurrently": "^4.0.1",
-    "redux-thunk": "^2.3.0"
+    "concurrently": "^4.0.1"
   },
   "devDependencies": {},
   "scripts": {
