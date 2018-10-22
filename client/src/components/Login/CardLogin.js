@@ -42,13 +42,6 @@ const CardLogin = props => {
           props.action.submitCard(props.cardNumber, props.pin, props.history);
         }}
       />
-      <Link to="/addcard">
-        <RaisedButton
-          label="Add Card"
-          secondary={true}
-          style={{ margin: 12 }}
-        />
-      </Link>
       <h3 style={{ color: "red" }}>{props.error}</h3>
     </Paper>
   );

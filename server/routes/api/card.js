@@ -7,25 +7,26 @@ const storeTransaction = require("../api/transaction");
 //@route GET  /api/card/add_card
 //@desc       add new card
 //@access     Public
-router.post("/add_card", (req, res) => {
+router.post("/add_card", async (req, res) => {
   try {
-    Card.findOne({ cardNumber: req.body.cardNumber }).then(card => {
-      if (card) {
-        return res.status(400).json({ cardNumber: "card is already exists" });
-      } else {
-        const newCard = new Card({
-          cardNumber: req.body.cardNumber,
-          pin: req.body.pin,
-          balance: req.body.balance
-        });
-        newCard
-          .save()
-          .then(card => {
-            res.status(200).json(card);
-          })
-          .catch(err => console.log(err));
+    const card = await Card.findOne({ cardNumber: req.body.cardNumber });
+    if (card) {
+      return res.status(400).json({ cardNumber: "card is already exists" });
+    } else {
+      const newCard = new Card({
+        cardNumber: req.body.cardNumber,
+        pin: req.body.pin,
+        balance: req.body.balance
+      });
+      try {
+        const newCard = await newCard.save();
+        if (newCard) {
+          res.status(200).json(card);
+        }
+      } catch (error) {
+        res.status(400).json(error);
       }
-    });
+    }
   } catch (error) {
     console.log("Error while save card", error);
   }
@@ -34,9 +35,10 @@ router.post("/add_card", (req, res) => {
 //@route GET  /api/card
 //@desc       Check entered card or pin is valid or not
 //@access     Private
-router.post("/login", (req, res) => {
-  //find card
-  Card.findOne({ cardNumber: req.body.cardNumber }).then(card => {
+router.post("/login", async (req, res) => {
+  try {
+    //find card
+    const card = await Card.findOne({ cardNumber: req.body.cardNumber });
     //check card
     if (!card) {
       return res.json({ status: false, msg: "Card is not found " });
@@ -54,37 +56,35 @@ router.post("/login", (req, res) => {
         balance: card.balance
       }
     });
-  });
+  } catch (error) {
+    res.status(404).json(error);
+  }
 });
 
 //@route GET  /api/card/withdrawal
 // @desc       Withdrawal amount from card and update atm cash
 //             count and store transaction history
 //@access     Private
-router.put("/withdrawal", (req, res) => {
+router.put("/withdrawal", async (req, res) => {
   if (req.body.withdrawalAmt % 100 === 0) {
-    Card.findOne({
+    const card = await Card.findOne({
       cardNumber: req.body.cardNumber,
       balance: { $gte: req.body.withdrawalAmt }
-    }).then(async card => {
-      if (card && card.balance !== 0) {
-        //update atm and get cash
-        const notes = await atmWithdrawal(card.balance, req.body.withdrawalAmt);
-        card
-          .updateOne({
-            balance: card.balance - req.body.withdrawalAmt
-          })
-          .then(data => {
-            if (data.ok) {
-              //store transactions details in DB
-              const transactionsDetails = { card, req, res, notes };
-              storeTransaction(transactionsDetails);
-            }
-          });
-      } else {
-        res.json({ msg: "insuffient balance", status: false });
-      }
     });
+    if (card && card.balance !== 0) {
+      //update atm and get cash
+      const notes = await atmWithdrawal(card.balance, req.body.withdrawalAmt);
+      const data = await card.updateOne({
+        balance: card.balance - req.body.withdrawalAmt
+      });
+      if (data.ok) {
+        //store transactions details in DB
+        const transactionsDetails = { card, req, res, notes };
+        storeTransaction(transactionsDetails);
+      }
+    } else {
+      res.json({ msg: "insuffient balance", status: false });
+    }
   } else {
     res.json({
       msg: "withdrawal amount should be multiple of 100",
@@ -94,11 +94,16 @@ router.put("/withdrawal", (req, res) => {
 });
 
 //get card details
-router.post("/carddetails/:id", (req, res) => {
+router.post("/carddetails/:id", async (req, res) => {
   if (req.params.id) {
-    Card.findOne({ _id: req.params.id })
-      .then(card => res.json({ status: true, card }))
-      .catch(error => res.json({ msg: "Error", status: false }));
+    try {
+      const card = await Card.findOne({ _id: req.params.id });
+      if (card) {
+        res.json({ status: true, card });
+      }
+    } catch (error) {
+      res.status(404).json(error);
+    }
   }
 });
 

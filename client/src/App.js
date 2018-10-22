@@ -2,7 +2,6 @@ import React, { PureComponent } from "react";
 import MuiThemeProvider from "material-ui/styles/MuiThemeProvider";
 import CardLogin from "./components/Login/CardLogin";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { AddCard } from "./components/Login/AddCard";
 import Dashboard from "./components/Dashboard/Dashboard";
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
@@ -25,7 +24,6 @@ class App extends PureComponent {
           <BrowserRouter>
             <Switch>
               <Route exact path="/" component={CardLogin} />
-              <Route path="/addcard" component={AddCard} />
               <Route path="/dashboard" component={Dashboard} />
               <Route path="/transaction" component={DisplayTransaction} />
             </Switch>

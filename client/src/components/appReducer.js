@@ -1,6 +1,7 @@
 const initialState = {
   cardNumber: "",
   pin: "",
+  balance: 0,
   cardDetails: {},
   error: "",
   withdrawalAmt: "",
