@@ -1,14 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Card = require("../../models/Card");
-const Transaction = require("../../models/Transaction");
-
-//@route GET  /api/card/dashboard/:id
-//@desc       Dashboard
-//@access     Private
-router.get("/dashboard", (req, res) => {
-  console.log(req);
-});
+const atmWithdrawal = require("../api/atm");
+const storeTransaction = require("../api/transaction");
 
 //@route GET  /api/card/add_card
 //@desc       add new card
@@ -45,54 +39,66 @@ router.post("/login", (req, res) => {
   Card.findOne({ cardNumber: req.body.cardNumber }).then(card => {
     //check card
     if (!card) {
-      return res.status(404).json({ cardNumber: "Card is not found" });
+      return res.json({ status: false, msg: "Card is not found " });
     }
     //check pin
     if (req.body.pin !== card.pin) {
-      return res.status(400).json({ pin: "pin number is incorrect" });
+      return res.json({ status: false, msg: "Pin number is incorrect" });
     }
-    res.status(200).json({ msg: "Success", card });
+    res.status(200).json({
+      msg: "Success",
+      status: true,
+      result: {
+        _id: card._id,
+        cardNumber: card.cardNumber,
+        balance: card.balance
+      }
+    });
   });
 });
 
 //@route GET  /api/card/withdrawal
-//@desc       Withdrawal amount from card
+// @desc       Withdrawal amount from card and update atm cash
+//             count and store transaction history
 //@access     Private
 router.put("/withdrawal", (req, res) => {
   if (req.body.withdrawalAmt % 100 === 0) {
     Card.findOne({
       cardNumber: req.body.cardNumber,
       balance: { $gte: req.body.withdrawalAmt }
-    }).then(card => {
+    }).then(async card => {
       if (card && card.balance !== 0) {
+        //update atm and get cash
+        const notes = await atmWithdrawal(card.balance, req.body.withdrawalAmt);
         card
           .updateOne({
             balance: card.balance - req.body.withdrawalAmt
           })
           .then(data => {
             if (data.ok) {
-              const newTransaction = new Transaction({
-                card: card._id,
-                date: Date.now(),
-                deposit: 0,
-                withdrawal: req.body.withdrawalAmt,
-                runningBalance: card.balance - req.body.withdrawalAmt
-              });
-              newTransaction.save().then(transaction => {
-                if (transaction) {
-                  return res.json({ msg: "transaction successful" });
-                }
-              });
+              //store transactions details in DB
+              const transactionsDetails = { card, req, res, notes };
+              storeTransaction(transactionsDetails);
             }
           });
       } else {
-        res.json({ msg: "insuffient balance" });
+        res.json({ msg: "insuffient balance", status: false });
       }
     });
   } else {
-    res
-      .status(400)
-      .json({ msg: "withdrawal amount should be multiple of 100" });
+    res.json({
+      msg: "withdrawal amount should be multiple of 100",
+      status: false
+    });
+  }
+});
+
+//get card details
+router.post("/carddetails/:id", (req, res) => {
+  if (req.params.id) {
+    Card.findOne({ _id: req.params.id })
+      .then(card => res.json({ status: true, card }))
+      .catch(error => res.json({ msg: "Error", status: false }));
   }
 });
 

@@ -3,6 +3,7 @@ const app = express();
 const mongoose = require("mongoose");
 const ports = require("./config/keys");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 //importing routes
 const card = require("./routes/api/card");
 
@@ -15,6 +16,8 @@ mongoose
   .then(() => console.log("MongoDB connected."))
   .catch(err => console.error(err));
 
+//cors middleware for accepting request
+app.use(cors());
 //body parser middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
