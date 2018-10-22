@@ -9,7 +9,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "concurrently --killall node \"cd server && npm run server\" \" cd client && npm start\""
+    "start": "concurrently --killall node \"cd server && npm run server\" \" cd client && npm start\"",
+    "buildup": "cd server && npm install && cd ../client && npm install"
   },
   "repository": {
     "type": "git",
